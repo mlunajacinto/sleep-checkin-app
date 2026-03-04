@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nightly Check-In</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d11;
+      --surface: #17171f;
+      --surface2: #1e1e2a;
+      --border: #26263a;
+      --text: #e4e4e8;
+      --text-muted: #777;
+      --text-dim: #aaa;
+      --accent: #4f8eff;
+      --accent-hover: #3d7bef;
+      --green: #22c55e;
+      --red: #ef4444;
+      --amber: #f59e0b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .app { width: 100%; max-width: 760px; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      font-size: 30px;
+      font-weight: 600;
+      line-height: 1.25;
+      margin-bottom: 14px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .status-line {
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-bottom: 18px;
+    }
+
+    button { cursor: pointer; font-family: inherit; }
+
+    .home-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .btn-card {
+      padding: 18px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 12px;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .btn-card:hover {
+      border-color: #3a3a53;
+      background: var(--surface2);
+    }
+
+    .btn-card strong { display: block; font-size: 15px; margin-bottom: 4px; }
+    .btn-card span { font-size: 12px; color: var(--text-muted); }
+
+    .btn-danger {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 9px;
+      border: 1px solid #553131;
+      background: #2a1515;
+      color: #f2b1b1;
+      font-size: 13px;
+    }
+
+    .btn-danger:hover { background: #351a1a; }
+
+    .btn-ghost {
+      padding: 10px 14px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      font-size: 13px;
+    }
+
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+    .btn-primary {
+      padding: 10px 14px;
+      border-radius: 9px;
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .progress-wrap { margin-bottom: 40px; }
+    .progress-track {
+      width: 100%;
+      height: 2px;
+      background: var(--surface2);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.35s ease;
+      border-radius: 2px;
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-tag {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .progress-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .question-text {
+      font-size: 19px;
+      font-weight: 500;
+      line-height: 1.55;
+      margin-bottom: 28px;
+      letter-spacing: -0.01em;
+      white-space: pre-line;
+    }
+
+    .answer-captured {
+      margin-bottom: 18px;
+      font-size: 14px;
+      color: var(--text-dim);
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 9px;
+    }
+
+    .yn-group {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .yn-group.two { grid-template-columns: 1fr 1fr; }
+
+    .yn-btn {
+      padding: 14px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      transition: all 0.15s;
+    }
+    .yn-btn:hover { background: var(--surface2); color: var(--text); }
+    .yn-btn.selected {
+      border-color: var(--accent);
+      background: rgba(79, 142, 255, 0.12);
+      color: var(--accent);
+    }
+
+    .text-input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 9px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+      margin-bottom: 20px;
+    }
+    .text-input:focus { border-color: var(--accent); }
+    .text-input::placeholder { color: var(--text-muted); }
+
+    .choice-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .choice-btn {
+      padding: 13px 16px;
+      border-radius: 9px;
+      font-size: 15px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-dim);
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .choice-btn:hover { background: var(--surface2); color: var(--text); }
+    .choice-btn.selected {
+      border-color: var(--accent);
+      background: rgba(79, 142, 255, 0.12);
+      color: var(--accent);
+    }
+
+    .followup-section {
+      margin-top: 22px;
+      padding-top: 22px;
+      border-top: 1px solid var(--surface2);
+    }
+
+    .followup-tag {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .followup-question {
+      font-size: 16px;
+      color: var(--text-dim);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      white-space: pre-line;
+    }
+
+    .compound-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .compound-field-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+    }
+
+    .compound-field .text-input  { margin-bottom: 0; }
+    .compound-field .choice-group { margin-bottom: 0; }
+
+    .notes-section {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .notes-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .notes-input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      resize: none;
+      line-height: 1.5;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .notes-input:focus { border-color: var(--accent); color: var(--text); }
+    .notes-input::placeholder { color: var(--text-muted); }
+
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn-next {
+      padding: 13px 28px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: 500;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-next:hover { background: var(--accent-hover); }
+    .btn-next:active { transform: scale(0.98); }
+
+    .dash-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .dash-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-scroll {
+      max-height: 66vh;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .dash-section {
+      margin-bottom: 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .dash-section-title {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 10px 12px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dash-item {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 12px;
+    }
+
+    .dash-item:last-child { border-bottom: none; }
+
+    .dash-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .dash-label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .dash-status {
+      font-size: 12px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      white-space: nowrap;
+    }
+
+    .dash-status.done { color: #78dba0; border-color: #2c5f42; background: rgba(34, 197, 94, 0.15); }
+    .dash-status.no { color: #ef9f9f; border-color: #6d3131; background: rgba(239, 68, 68, 0.15); }
+    .dash-status.unknown { color: #e4c481; border-color: #725822; background: rgba(245, 158, 11, 0.15); }
+
+    .quick-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .quick-btn {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-dim);
+      border-radius: 8px;
+      font-size: 12px;
+      padding: 6px 10px;
+    }
+
+    .quick-btn:hover { color: var(--text); }
+
+    .quick-btn.yes.active { border-color: #2c5f42; color: #78dba0; }
+    .quick-btn.no.active { border-color: #6d3131; color: #ef9f9f; }
+    .quick-btn.unknown.active { border-color: #725822; color: #e4c481; }
+
+    .dash-editor {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border);
+    }
+
+    .mini-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 6px;
+    }
+
+    .mini-input {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: #13131b;
+      color: var(--text);
+      padding: 8px 10px;
+      font-size: 13px;
+      margin-bottom: 10px;
+      font-family: inherit;
+    }
+
+    .mini-input:focus { border-color: var(--accent); outline: none; }
+
+    .summary-header {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .summary-date {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .summary-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      font-family: 'SF Mono', ui-monospace, 'Cascadia Code', 'Fira Mono', monospace;
+      font-size: 12.5px;
+      line-height: 1.85;
+      color: #bbb;
+      white-space: pre;
+      overflow-x: auto;
+      max-height: 55vh;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .btn-copy {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background 0.15s;
+      margin-bottom: 10px;
+    }
+
+    .btn-copy:hover { background: var(--accent-hover); }
+    .btn-copy.copied { background: var(--green); }
+
+    .summary-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 700px) {
+      .app { max-width: 100%; }
+      .home-actions { grid-template-columns: 1fr; }
+      .summary-actions { grid-template-columns: 1fr; }
+      .dash-head { flex-direction: column; }
+      .nav-row { flex-direction: column; align-items: stretch; }
+      .btn-next, .btn-ghost { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div id="screen-home" class="screen active">
+    <div class="eyebrow">Daily Check-In</div>
+    <h1>Track all day.<br>Finalize at night.</h1>
+    <p class="subtitle">Use quick daytime logging, then run Finalize to fill remaining gaps and generate one copyable daily log.</p>
+    <div class="status-line" id="home-status">Today status: 0/0 completed</div>
+    <div class="home-actions">
+      <button class="btn-card" onclick="openDashboard()">
+        <strong>Log As You Go</strong>
+        <span>Quick checklist updates during the day</span>
+      </button>
+      <button class="btn-card" onclick="startFinalize()">
+        <strong>Nightly Check-In</strong>
+        <span>Finalize missing items and generate summary</span>
+      </button>
+    </div>
+    <button class="btn-danger" onclick="clearToday()">Reset / Clear Today</button>
+  </div>
+
+  <div id="screen-dashboard" class="screen">
+    <div class="eyebrow">Today Dashboard</div>
+    <div class="dash-head">
+      <div>
+        <h1 style="font-size:24px;margin-bottom:8px;">Log As You Go</h1>
+        <div class="status-line" id="dash-status">Today status: 0/0 completed</div>
+      </div>
+      <div class="dash-actions">
+        <button class="btn-primary" onclick="startFinalize()">Finalize</button>
+        <button class="btn-ghost" onclick="showScreen('home')">Home</button>
+        <button class="btn-danger" onclick="clearToday()" style="width:auto;padding:10px 14px;">Clear Today</button>
+      </div>
+    </div>
+    <div id="dashboard-list" class="dashboard-scroll"></div>
+  </div>
+
+  <div id="screen-question" class="screen">
+    <div class="eyebrow">Nightly Finalize</div>
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-meta">
+        <span class="section-tag" id="section-tag"></span>
+        <span class="progress-count" id="progress-count"></span>
+      </div>
+    </div>
+    <div class="question-text" id="question-text"></div>
+    <div id="main-input-area"></div>
+    <div id="followup-area"></div>
+    <div id="notes-area"></div>
+    <div class="nav-row">
+      <button class="btn-ghost" onclick="openDashboard()">Review Answered Items</button>
+      <button class="btn-next" id="btn-next" onclick="nextQuestion()">Next →</button>
+    </div>
+  </div>
+
+  <div id="screen-summary" class="screen">
+    <div class="eyebrow">Nightly Check-In</div>
+    <div class="summary-header">Daily Log</div>
+    <div class="summary-date" id="summary-date"></div>
+    <div class="summary-block" id="summary-block"></div>
+    <button class="btn-copy" id="btn-copy" onclick="copyLog()">Copy Daily Log</button>
+    <div class="summary-actions">
+      <button class="btn-ghost" onclick="showScreen('home')">Back to Home</button>
+      <button class="btn-danger" onclick="clearToday()" style="margin:0;">Clear Today</button>
+    </div>
+  </div>
+
+</div>
+<script>
+var STORAGE_KEY = 'nightly_checkin_today_v1';
+
+var QUESTIONS = [
+  {
+    id: 'wake_anchor',
+    label: 'Wake anchor',
+    section: 'Sleep & Circadian Anchor',
+    text: 'Did you wake up by your 6:45 AM anchor today?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      text: 'What time exactly did you wake up?',
+      type: 'text',
+      placeholder: 'e.g. 6:42 AM'
+    }
+  },
+  {
+    id: 'morning_light',
+    label: 'Morning light',
+    section: 'Sleep & Circadian Anchor',
+    text: 'Did you get outdoor bright light exposure within an hour of waking?',
+    type: 'yn'
+  },
+  {
+    id: 'caffeine_cutoff',
+    label: 'Caffeine cutoff',
+    section: 'Sleep & Circadian Anchor',
+    text: 'Did you adhere to the 2:00 PM – 3:00 PM hard caffeine cutoff?',
+    type: 'yn',
+    followup: {
+      condition: 'no',
+      text: 'What time was your last caffeine intake?',
+      type: 'text',
+      placeholder: 'e.g. 3:40 PM'
+    }
+  },
+  {
+    id: 'digital_sunset',
+    label: 'Digital sunset',
+    section: 'Sleep & Circadian Anchor',
+    text: 'Are you initiating your digital sunset and wind-down by 10:00 PM tonight?',
+    type: 'yn'
+  },
+  {
+    id: 'optimize_minerals',
+    label: 'Optimize Minerals',
+    section: 'Supplement Protocol',
+    text: 'Did you take 1 scoop of Optimize Minerals with water in the morning?',
+    type: 'yn'
+  },
+  {
+    id: 'dhc_multivitamin',
+    label: 'DHC Multivitamin',
+    section: 'Supplement Protocol',
+    text: 'Did you take 1 capsule of the DHC Multivitamin with your first meal?',
+    type: 'yn'
+  },
+  {
+    id: 'fish_oil',
+    label: 'Fish Oil',
+    section: 'Supplement Protocol',
+    text: 'Did you take 1000mg of Fish Oil with lunch or dinner?',
+    type: 'yn'
+  },
+  {
+    id: 'magnesium',
+    label: 'Magnesium',
+    section: 'Supplement Protocol',
+    text: 'Did you take magnesium tonight?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      type: 'compound',
+      fields: [
+        { key: 'type', label: 'Type', type: 'choice', choices: ['Glycinate', 'L-threonate', 'Both'] },
+        { key: 'dose', label: 'Dose', type: 'text', placeholder: 'e.g. 200mg, 2 capsules' },
+        { key: 'time', label: 'Time', type: 'text', placeholder: 'e.g. 10:15 PM' }
+      ]
+    }
+  },
+  {
+    id: 'glycine',
+    label: 'Glycine',
+    section: 'Supplement Protocol',
+    text: 'Did you take glycine tonight?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      text: 'What dose?',
+      type: 'text',
+      placeholder: 'e.g. 3g'
+    }
+  },
+  {
+    id: 'melatonin',
+    label: 'Melatonin',
+    section: 'Supplement Protocol',
+    text: 'Did you need to take situational immediate-release Melatonin tonight?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      text: 'What was the exact dose and time taken?',
+      type: 'text',
+      placeholder: 'e.g. 0.5mg at 10:00 PM'
+    }
+  },
+  {
+    id: 'protein_target',
+    label: 'Protein target',
+    section: 'Nutrition & Lean Bulk',
+    text: 'Did you hit your daily protein target of approximately 120g?',
+    type: 'yn'
+  },
+  {
+    id: 'whole_food_protein',
+    label: 'Whole food protein',
+    section: 'Nutrition & Lean Bulk',
+    text: 'Did you get at least half of your daily protein from whole food sources?',
+    type: 'yn'
+  },
+  {
+    id: 'protein_shake',
+    label: 'Protein shake',
+    section: 'Nutrition & Lean Bulk',
+    text: 'Did you consume a “Just Ingredients” protein shake today?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      text: 'Which recipe did you use?',
+      type: 'choice',
+      choices: ['Standard water mix', '600-calorie bulking recipe']
+    }
+  },
+  {
+    id: 'caloric_surplus',
+    label: 'Caloric surplus',
+    section: 'Nutrition & Lean Bulk',
+    text: 'Did you align with your caloric surplus target based on today’s schedule?\n(Study days: 2200–2500 kcal · Shift days: 2510–2970 kcal)',
+    type: 'yn'
+  },
+  {
+    id: 'workout',
+    label: 'Upper/Lower workout',
+    section: 'Training & Biomechanics',
+    text: 'Did you complete your scheduled Upper/Lower split workout today?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      text: 'Which session did you complete?',
+      type: 'choice',
+      choices: ['Upper A', 'Upper B', 'Lower A', 'Lower B']
+    }
+  },
+  {
+    id: 'hammer_recode',
+    label: 'Hammer Recode',
+    section: 'Training & Biomechanics',
+    text: 'Did you perform your Hammer Recode floor work and ground resting?',
+    type: 'yn'
+  },
+  {
+    id: 'sports',
+    label: 'Volleyball / Golf',
+    section: 'Training & Biomechanics',
+    text: 'Did you participate in Volleyball or Golf today?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      text: 'Which activity, and did you sequence it properly with lifting?',
+      type: 'text',
+      placeholder: 'e.g. Volleyball — yes, sequenced after lifting'
+    }
+  },
+  {
+    id: 'restaurant_shift',
+    label: 'Restaurant shift',
+    section: 'Academic & Work Execution',
+    text: 'Did you work a restaurant shift today?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      text: 'Which shift (AD, L, or D) and did you eat your main dinner at work?',
+      type: 'text',
+      placeholder: 'e.g. L — yes, ate dinner at work'
+    }
+  },
+  {
+    id: 'study_blocks',
+    label: 'Study blocks',
+    section: 'Academic & Work Execution',
+    text: 'Did you complete your targeted academic study blocks for the day?',
+    type: 'yn',
+    followup: {
+      condition: 'yes',
+      text: 'How many total hours of deep work did you complete?',
+      type: 'text',
+      placeholder: 'e.g. 3.5'
+    }
+  },
+  {
+    id: 'maintenance_schoolwork',
+    label: 'Maintenance-only schoolwork',
+    section: 'Academic & Work Execution',
+    text: 'Did you successfully restrict schoolwork to 10–20 minute maintenance tasks only?',
+    type: 'yn',
+    showIf: function() { return ans('restaurant_shift') === 'yes'; }
+  },
+  {
+    id: 'was_late_shift',
+    label: 'Late shift',
+    section: 'Late Shift Decompression',
+    text: 'Was this a late shift? (arriving home ~9:40 PM)',
+    type: 'yn',
+    showIf: function() { return ans('restaurant_shift') === 'yes'; },
+    followup: {
+      condition: 'yes',
+      text: 'Did you execute the Rapid Decompression Protocol?\n(Sleep stack at door · warm shower · 10:45 PM lights out)',
+      type: 'yn'
+    }
+  }
+];
+
+var QUESTION_MAP = {};
+QUESTIONS.forEach(function(q) { QUESTION_MAP[q.id] = q; });
+
+var sessionData = {};
+var sessionDate = todayKey();
+var currentIndex = -1;
+var activeMode = 'home';
+var dashboardExpandedId = '';
+
+function todayKey() {
+  var d = new Date();
+  var m = String(d.getMonth() + 1).padStart(2, '0');
+  var day = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + m + '-' + day;
+}
+
+function nowTimeLabel() {
+  return new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+function initD(id) {
+  if (!sessionData[id]) {
+    sessionData[id] = { answer: '', followup: '', extras: {}, notes: '', time: '' };
+  }
+  if (!sessionData[id].extras) sessionData[id].extras = {};
+  if (!sessionData[id].time) sessionData[id].time = '';
+  return sessionData[id];
+}
+
+function getD(id) {
+  return sessionData[id] || { answer: '', followup: '', extras: {}, notes: '', time: '' };
+}
+
+function saveState() {
+  var payload = { sessionDate: sessionDate, sessionData: sessionData };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function loadState() {
+  var raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    var parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return;
+    if (parsed.sessionDate && parsed.sessionDate !== todayKey()) {
+      var startFresh = window.confirm('It looks like it\'s a new day.\n\nPress OK to Start fresh, or Cancel to Keep current.');
+      if (startFresh) {
+        localStorage.removeItem(STORAGE_KEY);
+        return;
+      }
+    }
+    sessionDate = parsed.sessionDate || todayKey();
+    sessionData = parsed.sessionData || {};
+  } catch (e) {
+    localStorage.removeItem(STORAGE_KEY);
+  }
+}
+
+function clearSessionData() {
+  sessionData = {};
+  sessionDate = todayKey();
+  dashboardExpandedId = '';
+  currentIndex = -1;
+  activeMode = 'home';
+  saveState();
+}
+
+function clearToday() {
+  if (!window.confirm('Clear all progress for today?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  clearSessionData();
+  refreshStatusLines();
+  showScreen('home');
+}
+
+function setAnswer(id, val) {
+  initD(id).answer = val;
+  saveState();
+}
+
+function setFollowup(id, val) {
+  initD(id).followup = val;
+  saveState();
+}
+
+function setExtra(id, key, val) {
+  var d = initD(id);
+  d.extras[key] = val;
+  saveState();
+}
+
+function setNotes(id, val) {
+  initD(id).notes = val;
+  saveState();
+}
+
+function setTime(id, val) {
+  initD(id).time = val;
+  saveState();
+}
+
+function ans(id) {
+  return ((sessionData[id] || {}).answer || '').toLowerCase();
+}
+
+function fup(id) {
+  return (sessionData[id] || {}).followup || '';
+}
+
+function ext(id, key) {
+  return ((sessionData[id] || {}).extras || {})[key] || '';
+}
+
+function noteVal(id) {
+  return (sessionData[id] || {}).notes || '';
+}
+
+function timeVal(id) {
+  return (sessionData[id] || {}).time || '';
+}
+
+function yn(id) {
+  var a = ans(id);
+  return a === 'yes' ? 'Yes' : a === 'no' ? 'No' : '—';
+}
+
+function ynWith(id) {
+  var a = ans(id), f = fup(id);
+  if (a === 'yes') return f ? 'Yes — ' + f : 'Yes';
+  if (a === 'no') return 'No';
+  return '—';
+}
+
+function shouldSkip(q) {
+  return typeof q.showIf === 'function' && !q.showIf();
+}
+
+function isMeaningfulAnswer(q, answer) {
+  var a = (answer || '').trim();
+  if (!a) return false;
+  if (q.type === 'yn') return a === 'yes' || a === 'no';
+  return true;
+}
+
+function isFollowupRequired(q) {
+  var d = getD(q.id);
+  return !!(q.followup && q.followup.condition === d.answer);
+}
+
+function isFollowupComplete(q) {
+  if (!isFollowupRequired(q)) return true;
+  var d = getD(q.id);
+  var fu = q.followup;
+  if (fu.type === 'compound') {
+    return fu.fields.every(function(field) {
+      return !!((d.extras || {})[field.key] || '').toString().trim();
+    });
+  }
+  if (fu.type === 'yn') {
+    return d.followup === 'yes' || d.followup === 'no';
+  }
+  return !!(d.followup || '').trim();
+}
+
+function questionNeedsFinalize(q) {
+  if (shouldSkip(q)) return false;
+  var d = getD(q.id);
+  if (!isMeaningfulAnswer(q, d.answer)) return true;
+  if (!isFollowupComplete(q)) return true;
+  return false;
+}
+
+function finalizeIndexes() {
+  var out = [];
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    if (questionNeedsFinalize(QUESTIONS[i])) out.push(i);
+  }
+  return out;
+}
+
+function findNextFinalizeIndex(start) {
+  for (var i = start; i < QUESTIONS.length; i++) {
+    if (questionNeedsFinalize(QUESTIONS[i])) return i;
+  }
+  return -1;
+}
+
+function isSimpleQuickDone(q) {
+  return q.type === 'yn' && !q.followup;
+}
+
+function getStatus(q) {
+  var a = ans(q.id);
+  if (a === 'yes') {
+    return isFollowupComplete(q) ? { cls: 'done', text: 'Done' } : { cls: 'unknown', text: 'Needs detail' };
+  }
+  if (a === 'no') return { cls: 'no', text: 'Skipped' };
+  return { cls: 'unknown', text: 'Unknown/Later' };
+}
+
+function visibleQuestionsForDashboard() {
+  return QUESTIONS.filter(function(q) { return !shouldSkip(q); });
+}
+
+function completionCounts() {
+  var vis = visibleQuestionsForDashboard();
+  var complete = vis.filter(function(q) { return !questionNeedsFinalize(q); }).length;
+  return { complete: complete, total: vis.length };
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function refreshStatusLines() {
+  var c = completionCounts();
+  var text = 'Today status: ' + c.complete + '/' + c.total + ' completed';
+  document.getElementById('home-status').textContent = text;
+  document.getElementById('dash-status').textContent = text;
+}
+
+function openDashboard() {
+  activeMode = 'dashboard';
+  refreshStatusLines();
+  renderDashboard();
+  showScreen('dashboard');
+}
+
+function startFinalize() {
+  activeMode = 'finalize';
+  currentIndex = findNextFinalizeIndex(0);
+  if (currentIndex < 0) {
+    buildSummary();
+    showScreen('summary');
+    return;
+  }
+  showScreen('question');
+  renderQuestion();
+}
+
+function renderDashboard() {
+  var groups = {};
+  var order = [];
+  visibleQuestionsForDashboard().forEach(function(q) {
+    if (!groups[q.section]) {
+      groups[q.section] = [];
+      order.push(q.section);
+    }
+    groups[q.section].push(q);
+  });
+
+  var html = '';
+  order.forEach(function(section) {
+    html += '<div class="dash-section">';
+    html += '<div class="dash-section-title">' + esc(section) + '</div>';
+
+    groups[section].forEach(function(q) {
+      var d = getD(q.id);
+      var st = getStatus(q);
+      var expanded = dashboardExpandedId === q.id;
+      var ansValue = d.answer || 'unknown';
+
+      html += '<div class="dash-item">';
+      html += '  <div class="dash-row">';
+      html += '    <div class="dash-label">' + esc(q.label) + '</div>';
+      html += '    <span class="dash-status ' + st.cls + '">' + st.text + '</span>';
+      html += '  </div>';
+      html += '  <div class="quick-actions">';
+      html += '    <button class="quick-btn yes ' + (ansValue === 'yes' ? 'active' : '') + '" onclick="dashQuick(\'' + q.id + '\',\'yes\')">✅ Done</button>';
+      html += '    <button class="quick-btn no ' + (ansValue === 'no' ? 'active' : '') + '" onclick="dashQuick(\'' + q.id + '\',\'no\')">❌ Skip</button>';
+      html += '    <button class="quick-btn unknown ' + ((ansValue !== 'yes' && ansValue !== 'no') ? 'active' : '') + '" onclick="dashQuick(\'' + q.id + '\',\'unknown\')">⏳ Later</button>';
+      html += '    <button class="quick-btn" onclick="toggleDashEditor(\'' + q.id + '\')">' + (expanded ? 'Close' : 'Edit') + '</button>';
+      html += '  </div>';
+      if (expanded) {
+        html += buildDashboardEditor(q);
+      }
+      html += '</div>';
+    });
+
+    html += '</div>';
+  });
+
+  document.getElementById('dashboard-list').innerHTML = html;
+}
+
+function toggleDashEditor(id) {
+  dashboardExpandedId = dashboardExpandedId === id ? '' : id;
+  renderDashboard();
+}
+
+function dashQuick(id, val) {
+  var q = QUESTION_MAP[id];
+  if (!q) return;
+  if (val === 'unknown') {
+    setAnswer(id, 'unknown');
+    setFollowup(id, '');
+    initD(id).extras = {};
+    if (!timeVal(id)) setTime(id, nowTimeLabel());
+    saveState();
+    if (id === 'restaurant_shift') dashboardExpandedId = '';
+    refreshStatusLines();
+    renderDashboard();
+    return;
+  }
+
+  setAnswer(id, val);
+  if (!timeVal(id)) setTime(id, nowTimeLabel());
+
+  if (q.followup && q.followup.condition !== val) {
+    setFollowup(id, '');
+    initD(id).extras = {};
+    saveState();
+  }
+
+  if (val === 'yes' && q.followup) {
+    dashboardExpandedId = id;
+  } else if (isSimpleQuickDone(q)) {
+    dashboardExpandedId = '';
+  }
+
+  if (id === 'restaurant_shift') dashboardExpandedId = id;
+
+  refreshStatusLines();
+  renderDashboard();
+}
+
+function buildDashboardEditor(q) {
+  var d = getD(q.id);
+  var html = '<div class="dash-editor">';
+
+  html += '<div class="mini-label">Question</div>';
+  html += '<div style="font-size:13px;color:var(--text-dim);margin-bottom:10px;line-height:1.45;white-space:pre-line;">' + esc(q.text) + '</div>';
+
+  html += '<div class="mini-label">Answer</div>';
+  html += '<div class="quick-actions" style="margin-top:0;margin-bottom:10px;">';
+  html += '<button class="quick-btn yes ' + (d.answer === 'yes' ? 'active' : '') + '" onclick="dashSetAnswer(\'' + q.id + '\',\'yes\')">Yes</button>';
+  html += '<button class="quick-btn no ' + (d.answer === 'no' ? 'active' : '') + '" onclick="dashSetAnswer(\'' + q.id + '\',\'no\')">No</button>';
+  html += '<button class="quick-btn unknown ' + (d.answer === 'unknown' || !d.answer ? 'active' : '') + '" onclick="dashSetAnswer(\'' + q.id + '\',\'unknown\')">Unknown</button>';
+  html += '</div>';
+
+  html += '<div class="mini-label">Time</div>';
+  html += '<input class="mini-input" type="text" placeholder="e.g. 10:15 PM" value="' + attr(d.time || '') + '" oninput="setTime(\'' + q.id + '\',this.value)">';
+
+  if (q.followup && q.followup.condition === d.answer) {
+    html += '<div class="mini-label">Follow-up</div>';
+    html += buildDashFollowupInput(q);
+  }
+
+  html += '<div class="mini-label">Notes</div>';
+  html += '<textarea class="mini-input" rows="2" placeholder="Optional context" oninput="setNotes(\'' + q.id + '\',this.value)">' + esc(d.notes || '') + '</textarea>';
+
+  html += '</div>';
+  return html;
+}
+
+function buildDashFollowupInput(q) {
+  var d = getD(q.id);
+  var fu = q.followup;
+  var html = '';
+
+  if (fu.text) {
+    html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;white-space:pre-line;">' + esc(fu.text) + '</div>';
+  }
+
+  if (fu.type === 'text') {
+    html += '<input class="mini-input" type="text" placeholder="' + attr(fu.placeholder || '') + '" value="' + attr(d.followup || '') + '" oninput="setFollowup(\'' + q.id + '\',this.value)">';
+  } else if (fu.type === 'yn') {
+    html += '<div class="quick-actions" style="margin-top:0;">';
+    html += '<button class="quick-btn yes ' + (d.followup === 'yes' ? 'active' : '') + '" onclick="dashSetFollowup(\'' + q.id + '\',\'yes\')">Yes</button>';
+    html += '<button class="quick-btn no ' + (d.followup === 'no' ? 'active' : '') + '" onclick="dashSetFollowup(\'' + q.id + '\',\'no\')">No</button>';
+    html += '</div>';
+  } else if (fu.type === 'choice') {
+    html += '<div class="quick-actions" style="margin-top:0;">';
+    fu.choices.forEach(function(choice) {
+      var active = d.followup === choice ? 'active' : '';
+      html += '<button class="quick-btn ' + active + '" onclick="dashSetFollowupChoice(\'' + q.id + '\',\'' + js(choice) + '\')">' + esc(choice) + '</button>';
+    });
+    html += '</div>';
+  } else if (fu.type === 'compound') {
+    fu.fields.forEach(function(field) {
+      var current = (d.extras || {})[field.key] || '';
+      html += '<div class="mini-label" style="margin-top:8px;">' + esc(field.label) + '</div>';
+      if (field.type === 'text') {
+        html += '<input class="mini-input" type="text" placeholder="' + attr(field.placeholder || '') + '" value="' + attr(current) + '" oninput="setExtra(\'' + q.id + '\',\'' + field.key + '\',this.value)">';
+      } else {
+        html += '<div class="quick-actions" style="margin-top:0;">';
+        field.choices.forEach(function(choice) {
+          var active = current === choice ? 'active' : '';
+          html += '<button class="quick-btn ' + active + '" onclick="dashSetExtraChoice(\'' + q.id + '\',\'' + field.key + '\',\'' + js(choice) + '\')">' + esc(choice) + '</button>';
+        });
+        html += '</div>';
+      }
+    });
+  }
+
+  return html;
+}
+
+function dashSetAnswer(id, value) {
+  setAnswer(id, value);
+  if (value !== 'yes') {
+    setFollowup(id, '');
+    initD(id).extras = {};
+    saveState();
+  }
+  if (value === 'yes' && !timeVal(id)) setTime(id, nowTimeLabel());
+  refreshStatusLines();
+  renderDashboard();
+}
+
+function dashSetFollowup(id, value) {
+  setFollowup(id, value);
+  refreshStatusLines();
+  renderDashboard();
+}
+
+function dashSetFollowupChoice(id, value) {
+  setFollowup(id, value);
+  refreshStatusLines();
+  renderDashboard();
+}
+
+function dashSetExtraChoice(id, key, value) {
+  setExtra(id, key, value);
+  refreshStatusLines();
+  renderDashboard();
+}
+
+function renderQuestion() {
+  var q = QUESTIONS[currentIndex];
+  if (!q) return;
+
+  var pending = finalizeIndexes();
+  var position = Math.max(0, pending.indexOf(currentIndex)) + 1;
+  var total = pending.length || 1;
+  var pct = Math.round(((position - 1) / total) * 100);
+
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('section-tag').textContent = q.section;
+  document.getElementById('progress-count').textContent = position + ' / ' + total;
+  document.getElementById('question-text').textContent = q.text;
+  document.getElementById('btn-next').textContent = position === total ? 'Finish ✓' : 'Next →';
+
+  var d = getD(q.id);
+  var hasMeaningfulMain = isMeaningfulAnswer(q, d.answer);
+  var needsOnlyFollowup = hasMeaningfulMain && !isFollowupComplete(q);
+
+  if (needsOnlyFollowup) {
+    document.getElementById('main-input-area').innerHTML = '<div class="answer-captured">Answer captured earlier: <strong>' + esc(displayAnswer(q.id)) + '</strong>. Add missing follow-up below.</div>';
+    maybeShowFollowup(q, d.answer);
+  } else {
+    document.getElementById('main-input-area').innerHTML = buildMainInput(q);
+    maybeShowFollowup(q, d.answer);
+  }
+
+  document.getElementById('notes-area').innerHTML = buildNotesInput(q.id);
+}
+
+function displayAnswer(id) {
+  var a = ans(id);
+  if (a === 'yes') return 'Yes';
+  if (a === 'no') return 'No';
+  if (a === 'unknown') return 'Unknown';
+  return getD(id).answer || '—';
+}
+
+function buildMainInput(q) {
+  var val = getD(q.id).answer;
+
+  if (q.type === 'yn') {
+    return '<div class="yn-group">'
+      + '<button class="yn-btn ' + (val === 'yes' ? 'selected' : '') + '" onclick="pickYN(\'' + q.id + '\',\'yes\',\'main\',this)">Yes</button>'
+      + '<button class="yn-btn ' + (val === 'no' ? 'selected' : '') + '" onclick="pickYN(\'' + q.id + '\',\'no\',\'main\',this)">No</button>'
+      + '<button class="yn-btn ' + (val === 'unknown' ? 'selected' : '') + '" onclick="pickYN(\'' + q.id + '\',\'unknown\',\'main\',this)">Unknown</button>'
+      + '</div>';
+  }
+
+  if (q.type === 'text') {
+    return '<input class="text-input" type="text" placeholder="' + attr(q.placeholder || '') + '" value="' + attr(val) + '" oninput="pickText(\'' + q.id + '\',\'main\',this.value)">';
+  }
+
+  if (q.type === 'choice') {
+    return '<div class="choice-group">'
+      + q.choices.map(function(c) {
+        return '<button class="choice-btn ' + (val === c ? 'selected' : '') + '" onclick="pickChoice(\'' + q.id + '\',this,\'main\')">' + esc(c) + '</button>';
+      }).join('')
+      + '</div>';
+  }
+
+  return '';
+}
+
+function maybeShowFollowup(q, answer) {
+  var area = document.getElementById('followup-area');
+
+  if (!q.followup || q.followup.condition !== answer) {
+    area.innerHTML = '';
+    if (sessionData[q.id] && q.followup) {
+      sessionData[q.id].followup = '';
+      sessionData[q.id].extras = {};
+      saveState();
+    }
+    return;
+  }
+
+  var fu = q.followup;
+  var html = '<div class="followup-section">';
+
+  if (fu.type === 'compound') {
+    html += '<div class="followup-tag">Details</div>';
+    html += buildCompoundFollowup(q.id, fu);
+  } else {
+    html += '<div class="followup-tag">Follow-up</div>';
+    html += '<div class="followup-question">' + esc(fu.text || '') + '</div>';
+    html += buildFollowupInput(q.id, fu);
+  }
+
+  html += '</div>';
+  area.innerHTML = html;
+}
+
+function buildFollowupInput(parentId, fu) {
+  var val = getD(parentId).followup;
+
+  if (fu.type === 'text') {
+    return '<input class="text-input" type="text" placeholder="' + attr(fu.placeholder || '') + '" value="' + attr(val) + '" oninput="pickText(\'' + parentId + '\',\'followup\',this.value)">';
+  }
+
+  if (fu.type === 'yn') {
+    return '<div class="yn-group two">'
+      + '<button class="yn-btn ' + (val === 'yes' ? 'selected' : '') + '" onclick="pickYN(\'' + parentId + '\',\'yes\',\'followup\',this)">Yes</button>'
+      + '<button class="yn-btn ' + (val === 'no' ? 'selected' : '') + '" onclick="pickYN(\'' + parentId + '\',\'no\',\'followup\',this)">No</button>'
+      + '</div>';
+  }
+
+  if (fu.type === 'choice') {
+    return '<div class="choice-group">'
+      + fu.choices.map(function(c) {
+        return '<button class="choice-btn ' + (val === c ? 'selected' : '') + '" onclick="pickChoice(\'' + parentId + '\',this,\'followup\')">' + esc(c) + '</button>';
+      }).join('')
+      + '</div>';
+  }
+
+  return '';
+}
+
+function buildCompoundFollowup(parentId, fu) {
+  var extras = getD(parentId).extras || {};
+  var html = '<div class="compound-fields">';
+
+  fu.fields.forEach(function(field) {
+    var fieldVal = extras[field.key] || '';
+    html += '<div class="compound-field">';
+    html += '<div class="compound-field-label">' + esc(field.label) + '</div>';
+
+    if (field.type === 'choice') {
+      html += '<div class="choice-group">';
+      field.choices.forEach(function(c) {
+        html += '<button class="choice-btn ' + (fieldVal === c ? 'selected' : '') + '" onclick="pickExtra(\'' + parentId + '\',\'' + field.key + '\',this)">' + esc(c) + '</button>';
+      });
+      html += '</div>';
+    } else if (field.type === 'text') {
+      html += '<input class="text-input" type="text" placeholder="' + attr(field.placeholder || '') + '" value="' + attr(fieldVal) + '" oninput="setExtra(\'' + parentId + '\',\'' + field.key + '\',this.value)">';
+    }
+
+    html += '</div>';
+  });
+
+  html += '</div>';
+  return html;
+}
+
+function buildNotesInput(id) {
+  var val = getD(id).notes || '';
+  return '<div class="notes-section">'
+    + '<div class="notes-label">Notes (optional)</div>'
+    + '<textarea class="notes-input" rows="2" placeholder="Any additional context…" oninput="setNotes(\'' + id + '\',this.value)">' + esc(val) + '</textarea>'
+    + '</div>';
+}
+
+function pickYN(id, val, role, btn) {
+  var group = btn.closest('.yn-group');
+  if (group) group.querySelectorAll('.yn-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+
+  if (role === 'main') {
+    setAnswer(id, val);
+    if (val === 'yes' && !timeVal(id)) setTime(id, nowTimeLabel());
+    if (val !== 'yes') {
+      setFollowup(id, '');
+      initD(id).extras = {};
+      saveState();
+    }
+    maybeShowFollowup(QUESTIONS[currentIndex], val);
+  } else {
+    setFollowup(id, val);
+  }
+
+  refreshStatusLines();
+}
+
+function pickChoice(id, btn, role) {
+  var val = btn.textContent.trim();
+  var group = btn.closest('.choice-group');
+  if (group) group.querySelectorAll('.choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+
+  if (role === 'main') {
+    setAnswer(id, val);
+    if (!timeVal(id)) setTime(id, nowTimeLabel());
+  } else {
+    setFollowup(id, val);
+  }
+
+  refreshStatusLines();
+}
+
+function pickText(id, role, val) {
+  if (role === 'main') {
+    setAnswer(id, val);
+    if (val && !timeVal(id)) setTime(id, nowTimeLabel());
+  } else {
+    setFollowup(id, val);
+  }
+  refreshStatusLines();
+}
+
+function pickExtra(id, key, btn) {
+  var val = btn.textContent.trim();
+  var group = btn.closest('.choice-group');
+  if (group) group.querySelectorAll('.choice-btn').forEach(function(b) { b.classList.remove('selected'); });
+  btn.classList.add('selected');
+  setExtra(id, key, val);
+  refreshStatusLines();
+}
+
+function nextQuestion() {
+  currentIndex = findNextFinalizeIndex(currentIndex + 1);
+  if (currentIndex < 0) {
+    buildSummary();
+    showScreen('summary');
+  } else {
+    renderQuestion();
+  }
+}
+
+function pad(str, len) {
+  return str + ' '.repeat(Math.max(0, len - str.length));
+}
+
+function withTime(id, base) {
+  var t = timeVal(id);
+  return t ? base + ' (at ' + t + ')' : base;
+}
+
+function buildSummary() {
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+  document.getElementById('summary-date').textContent = dateStr;
+
+  var L = 22;
+  var worked = ans('restaurant_shift') === 'yes';
+  var lines = [];
+
+  lines.push('DAILY LOG — ' + dateStr.toUpperCase());
+  lines.push('');
+
+  var wake_a = ans('wake_anchor'), wake_f = fup('wake_anchor');
+  var wake_val = wake_a === 'yes' ? (wake_f ? 'Yes — ' + wake_f : 'Yes')
+               : wake_a === 'no'  ? 'No' : '—';
+
+  var caff_a = ans('caffeine_cutoff'), caff_f = fup('caffeine_cutoff');
+  var caff_val = caff_a === 'yes' ? 'Yes'
+               : caff_a === 'no'  ? (caff_f ? 'No — last caffeine ' + caff_f : 'No')
+               : '—';
+
+  lines.push('SLEEP');
+  lines.push('  ' + pad('Wake Anchor:',     L) + withTime('wake_anchor', wake_val));
+  lines.push('  ' + pad('Morning Light:',   L) + withTime('morning_light', yn('morning_light')));
+  lines.push('  ' + pad('Caffeine Cutoff:', L) + withTime('caffeine_cutoff', caff_val));
+  lines.push('  ' + pad('Digital Sunset:',  L) + withTime('digital_sunset', yn('digital_sunset')));
+  lines.push('');
+
+  var mag_a = ans('magnesium');
+  var mag_type = ext('magnesium', 'type');
+  var mag_dose = ext('magnesium', 'dose');
+  var mag_time = ext('magnesium', 'time');
+  var mag_parts = [mag_type, mag_dose, mag_time].filter(Boolean);
+  var mag_val = mag_a === 'yes' ? ('Yes' + (mag_parts.length ? ' — ' + mag_parts.join(' — ') : ''))
+              : mag_a === 'no' ? 'No' : '—';
+
+  lines.push('SUPPLEMENTS');
+  lines.push('  ' + pad('Optimize Minerals:', L) + withTime('optimize_minerals', yn('optimize_minerals')));
+  lines.push('  ' + pad('DHC Multivitamin:',  L) + withTime('dhc_multivitamin', yn('dhc_multivitamin')));
+  lines.push('  ' + pad('Fish Oil:',          L) + withTime('fish_oil', yn('fish_oil')));
+  lines.push('  ' + pad('Magnesium:',         L) + withTime('magnesium', mag_val));
+  lines.push('  ' + pad('Glycine:',           L) + withTime('glycine', ynWith('glycine')));
+  lines.push('  ' + pad('Melatonin:',         L) + withTime('melatonin', ynWith('melatonin')));
+  lines.push('');
+
+  lines.push('NUTRITION');
+  lines.push('  ' + pad('Protein Target:',     L) + withTime('protein_target', yn('protein_target')));
+  lines.push('  ' + pad('Whole Food Protein:', L) + withTime('whole_food_protein', yn('whole_food_protein')));
+  lines.push('  ' + pad('Protein Shake:',      L) + withTime('protein_shake', ynWith('protein_shake')));
+  lines.push('  ' + pad('Caloric Surplus:',    L) + withTime('caloric_surplus', yn('caloric_surplus')));
+  lines.push('');
+
+  var sports_a = ans('sports'), sports_f = fup('sports');
+  var sports_val = sports_a === 'yes' ? (sports_f || 'Yes') : sports_a === 'no' ? 'No' : '—';
+
+  lines.push('TRAINING');
+  lines.push('  ' + pad('Workout:',       L) + withTime('workout', ynWith('workout')));
+  lines.push('  ' + pad('Hammer Recode:', L) + withTime('hammer_recode', yn('hammer_recode')));
+  lines.push('  ' + pad('Sports:',        L) + withTime('sports', sports_val));
+
+  if (worked) {
+    var shift_f = fup('restaurant_shift');
+    var study_a = ans('study_blocks'), study_f = fup('study_blocks');
+    var study_val = study_a === 'yes' ? (study_f ? 'Yes — ' + study_f + ' hrs deep work' : 'Yes') : study_a === 'no' ? 'No' : '—';
+
+    lines.push('');
+    lines.push('WORK / SCHOOL');
+    lines.push('  ' + pad('Restaurant Shift:', L) + withTime('restaurant_shift', shift_f || 'Yes'));
+    lines.push('  ' + pad('Study Blocks:',     L) + withTime('study_blocks', study_val));
+    lines.push('  ' + pad('Maintenance Only:', L) + withTime('maintenance_schoolwork', yn('maintenance_schoolwork')));
+
+    var late_a = ans('was_late_shift');
+    var decom_a = fup('was_late_shift');
+    var decom_val = late_a === 'yes' ? (decom_a === 'yes' ? 'Yes' : decom_a === 'no' ? 'No' : '?') : '—';
+
+    lines.push('');
+    lines.push('SHIFT DECOMPRESSION');
+    lines.push('  ' + pad('Late Shift:', L) + withTime('was_late_shift', yn('was_late_shift')));
+    if (late_a === 'yes') {
+      lines.push('  ' + pad('Rapid Decompression:', L) + decom_val);
+    }
+  } else {
+    var study_a2 = ans('study_blocks'), study_f2 = fup('study_blocks');
+    var study_val2 = study_a2 === 'yes' ? (study_f2 ? 'Yes — ' + study_f2 + ' hrs deep work' : 'Yes') : study_a2 === 'no' ? 'No' : '—';
+
+    lines.push('');
+    lines.push('SCHOOL');
+    lines.push('  ' + pad('Study Blocks:', L) + withTime('study_blocks', study_val2));
+  }
+
+  var noteLines = [];
+  QUESTIONS.forEach(function(q) {
+    if (shouldSkip(q)) return;
+    var n = noteVal(q.id);
+    if (n && n.trim()) {
+      noteLines.push('  ' + q.label + ' — ' + n.trim());
+    }
+  });
+
+  if (noteLines.length > 0) {
+    lines.push('');
+    lines.push('DETAIL NOTES');
+    noteLines.forEach(function(nl) { lines.push(nl); });
+  }
+
+  document.getElementById('summary-block').textContent = lines.join('\n');
+  refreshStatusLines();
+}
+
+async function copyLog() {
+  var text = document.getElementById('summary-block').textContent;
+  var btn = document.getElementById('btn-copy');
+
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;width:1px;height:1px';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
+  btn.textContent = '✓ Copied to Clipboard';
+  btn.classList.add('copied');
+  setTimeout(function() {
+    btn.textContent = 'Copy Daily Log';
+    btn.classList.remove('copied');
+  }, 2500);
+}
+
+function attr(s) { return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+function esc(s)  { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function js(s)   { return (s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+
+(function boot() {
+  loadState();
+  refreshStatusLines();
+  showScreen('home');
+})();
+</script>
+</body>
+</html>
