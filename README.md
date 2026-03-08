@@ -1,104 +1,38 @@
-# study-recall-app
+# sleep-checkin-app
 
-I built this for myself. I studied my own learning patterns, put together a personal learning profile, and found that the method that actually works for me is active recall — testing yourself on material instead of rereading it. So I built a tool that does exactly that.
+I spent time researching my own habits and best practices for how I function — sleep, energy, consistency — and loaded all of it into Google's NotebookLM to use as a personal daily assistant. The problem: NotebookLM has no logging features. I couldn't feed it an accurate, structured account of my day without it being tedious or incomplete.
 
-You paste in a resource, write what you remember, and the app grades your recall. Missed something? Drill it. That's the loop.
-
----
-
-## Why local AI
-
-I wanted AI-powered grading but I had no real coding experience going into this, and I wasn't going to pay per-token for a personal study tool. I found Ollama — a way to run LLMs locally, for free, with comparable quality for this kind of task. No API key, no cost, no cloud dependency. The app runs entirely on your machine.
+This app solves that. It's a personal daily logging tool with two modes: log as you go throughout the day, or do a single nightly log before bed. Either way, it formats your answers into a clean log you can paste directly into NotebookLM.
 
 ---
 
-## The hard part: grading logic
+## How it works
 
-This was the most difficult thing to build. The core question was: how do you get an LLM to grade a student's recall against a source accurately, without it being too loose or too strict?
+The pipeline is simple:
 
-My first instinct was prompting — load the model with a grading prompt and let it decide. That didn't hold up. A model left to freely interpret recall introduces too much noise: it would credit vague overlap, miss paraphrases, and inconsistently handle missing details.
-
-The solution was a keypoint extraction step first. Instead of asking the model to grade a free-recall response against a raw resource, the app first extracts discrete key points from the resource, then grades the student's recall against those specific points. That gives the grader a rubric instead of a judgment call.
-
-Even then, grading needed tighter constraints. I ended up building a sequence of gates the model has to pass before a response gets marked Correct:
-
-- **Evidence** — the match has to be supported by the resource, not inferred
-- **Mention** — if the student didn't address a concept, it's Missing or Kind-of, not Correct
-- **Specificity** — vague overlap doesn't count
-- **Critical detail** — numbers, percentages, ranges matter; wrong or missing = not Correct
-- **Contradiction** — stating the opposite of the resource is wrong, even if it's close
-- **Attribution** — a key point should match the student's actual sentence, not just any sentence
-- **Paraphrase** — valid paraphrasing counts as Correct; exact wording isn't required
-- **Fallback** — if the model is weak, ground rules keep grading functional
-
-The grader isn't perfect, but it's consistent and strict by design. It can't just freely decide — it has to pass all the gates.
+1. The app asks a predetermined set of questions
+2. You answer them — either incrementally as the day goes on (log-as-you-go), or all at once at the end of the day (nightly log)
+3. Log-as-you-go entries save and accumulate until you finalize your nightly log
+4. Finalizing formats everything into a structured log and copies it to your clipboard
+5. Paste it into NotebookLM — it handles the rest
 
 ---
 
-## Getting started
+## Why I built it
 
-```bash
-npm install
-cp .env.example .env.local
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
+NotebookLM is good at synthesizing information and supporting decisions when it has context. But it has no way to receive a daily log — you'd have to type a coherent summary from scratch every night, which doesn't happen consistently. This app removes that friction. The log goes out whether you have two minutes or twenty.
 
 ---
 
-## Ollama setup
+## Running it
 
-Install [Ollama](https://ollama.com), then pull the tested models:
-
-```bash
-ollama pull deepseek-r1:1.5b
-ollama pull nomic-embed-text
-ollama serve
-```
-
-- **Minimum chat model:** `deepseek-r1:1.5b`
-- **Recommended embedding model:** `nomic-embed-text`
-
-If you have stronger hardware, you can swap in a larger model via `OLLAMA_MODEL` in `.env.local`. Grading quality improves — app logic stays the same.
+Open `index.html` in your browser. No install, no dependencies. It runs locally.
 
 ---
 
-## Environment variables
+## Usage
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Local Ollama endpoint |
-| `OLLAMA_MODEL` | `deepseek-r1:1.5b` | Chat/grading model |
-| `OLLAMA_EMBED_MODEL` | `nomic-embed-text` | Embedding model for semantic matching |
-| `OLLAMA_NUM_CTX` | `4096` | Context window |
-| `OLLAMA_TEMPERATURE` | `0` | Deterministic output |
-
-**Embedding fallback:** If `OLLAMA_EMBED_MODEL` is unavailable, the app falls back to lexical matching. Grading still works — paraphrase detection just becomes less accurate.
-
----
-
-## Workflow
-
-1. Add a resource in `/resource`
-2. Study it outside the app
-3. Type your recall in `/recall`
-4. Run the check — results come back as Missing / Kind-of / Correct
-5. Drill your misses
-
----
-
-## Validation
-
-```bash
-npm run preflight       # lint + build + regression checks
-npm run eval:regression # acceptance harness only
-```
-
----
-
-## Troubleshooting
-
-- **Ollama not reachable:** check `ollama serve`, verify `OLLAMA_BASE_URL`, test with `curl http://localhost:11434/api/tags`
-- **Wrong model tag:** run `ollama list` and set exact installed tags in `.env.local`
-- **Embedding unavailable:** app falls back to lexical matching automatically
+- **Log as you go:** Answer questions throughout the day as things happen. Entries save automatically.
+- **Nightly log:** Answer the full question set at the end of the day.
+- **Finalize:** Combines everything into a formatted log and copies it to your clipboard.
+- **Paste into NotebookLM** to update your assistant with the day's data.
